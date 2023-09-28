@@ -39,26 +39,30 @@ public class Scanner {
 
         for (int i = 0; i < source.length(); i++) {
             c = source.charAt(i);
-
             switch (estado) {
                 case 0:
-                    if (Character.isLetter(c)) {
-                        estado = 9;
+                    if( c == '>'){
+                        estado = 1;
+                        lexema += c;
+                    }
+                    else if(c == '<'){
+                        estado = 4;
+                        lexema += c;
+                    }
+                    else if(c == '='){
+                        estado = 7;
+                        lexema += c;
+                    }
+                    else if(c == '!'){
+                        estado = 10;
+                        lexema += c;
+                    }
+                    else if(Character.isLetter(c)){
+                        estado = 13;
                         lexema += c;
                     } else if (Character.isDigit(c)) {
                         estado = 11;
                         lexema += c;
-
-                        /*while(Character.isDigit(c)){
-                            lexema += c;
-                            i++;
-                            c = source.charAt(i);
-                        }
-                        Token t = new Token(TipoToken.NUMBER, lexema);
-                        lexema = "";
-                        estado = 0;
-                        tokens.add(t);
-                        */
                     } else if (c == '"') {
                         estado = 24;
                         lexema += c;
@@ -66,46 +70,135 @@ public class Scanner {
                         estado = 26;
                         lexema += c;
                     }
-
                     break;
-
-                case 9:
-                    if (Character.isLetter(c) || Character.isDigit(c)) {
-                        estado = 9;
+                case 1:
+                    if (c == '=') {
+                        estado = 2;
                         lexema += c;
-                    } else {
-                        // Vamos a crear el Token de identificador o palabra reservada
-                        TipoToken tt = palabrasReservadas.get(lexema);
-
-                        if (tt == null) {
-                            Token t = new Token(TipoToken.IDENTIFIER, lexema);
-                            tokens.add(t);
-                        } else {
-                            Token t = new Token(tt, lexema);
-                            tokens.add(t);
-                        }
-
-                        estado = 0;
-                        lexema = "";
-                        i--;
+                    }
+                    else{
+                        estado = 3;
+                        //lexema += c;
+                    }
+                    break;
+                case 2:
+                    // Vamos a crear el Token de mayor o igual -----------------
+                    Token t = new Token(TipoToken.GREATER_EQUAL, lexema, null);
+                    tokens.add(t);
+                    estado = 0;
+                    lexema = "";
+                    i--;
+                    break;
+                case 3:
+                    // Vamos a crear el Token de mayor -------------------------
+                    Token t1 = new Token(TipoToken.GREATER, lexema, null);
+                    tokens.add(t1);
+                    estado = 0;
+                    lexema = "";
+                    i--;
+                    break;
+                case 4:
+                    if (c == '=') {
+                        estado = 5;
+                        lexema += c;
+                    }
+                    else{
+                        estado = 6;
+                        //lexema += c;
+                    }
+                    break;
+                case 5:
+                    // Vamos a crear el Token de menor o igual -----------------
+                    Token t2 = new Token(TipoToken.LESS_EQUAL, lexema, null);
+                    tokens.add(t2);
+                    estado = 0;
+                    lexema = "";
+                    i--;
+                    break;
+                case 6:
+                    // Vamos a crear el Token de menor -------------------------
+                    Token t3 = new Token(TipoToken.LESS, lexema, null);
+                    tokens.add(t3);
+                    estado = 0;
+                    lexema = "";
+                    i--;
+                    break;
+                case 7:
+                    if (c == '=') {
+                        estado = 8;
+                        lexema += c;
+                    }
+                    else{
+                        estado = 9;
+                        //lexema += c;
+                    }
+                    break;
+                case 8:
+                    // Vamos a crear el Token de igual igual -------------------
+                    Token t4 = new Token(TipoToken.EQUAL_EQUAL, lexema, null);
+                    tokens.add(t4);
+                    estado = 0;
+                    lexema = "";
+                    i--;
+                    break;
+                case 9:
+                    // Vamos a crear el Token de igual -------------------------
+                    Token t5 = new Token(TipoToken.EQUAL, lexema, null);
+                    tokens.add(t5);
+                    estado = 0;
+                    lexema = "";
+                    i--;
+                    break;
+                case 10:
+                    if (c == '=') {
+                        estado = 11;
+                        lexema += c;
+                    }
+                    else{
+                        estado = 12;
+                        //lexema += c;
                     }
                     break;
                 case 11:
-                    if (Character.isDigit(c)) {
-                        estado = 11;
+                    // Vamos a crear el Token de diferente -------------------
+                    Token t6 = new Token(TipoToken.BANG_EQUAL, lexema, null);
+                    tokens.add(t6);
+                    estado = 0;
+                    lexema = "";
+                    i--;
+                    break;
+                case 12:
+                    // Vamos a crear el Token de igual igual -------------------
+                    Token t7 = new Token(TipoToken.BANG, lexema, null);
+                    tokens.add(t7);
+                    estado = 0;
+                    lexema = "";
+                    i--;
+                    break;
+                case 13:
+                    if(Character.isLetter(c) || Character.isDigit(c)){
+                        estado = 13;
                         lexema += c;
-                    } else if (c == '.') {
-
-                    } else if (c == 'E') {
-
-                    } else {
-                        Token t = new Token(TipoToken.NUMBER, lexema, Integer.valueOf(lexema));
-                        tokens.add(t);
-
-                        estado = 0;
-                        lexema = "";
+                    }
+                    else{
+                        estado = 14;
+                        //lexema += c;
                     }
                     break;
+                case 14:
+                    // Vamos a crear el Token de id o palabra reservada --------
+                    TipoToken tt = palabrasReservadas.get(lexema);
+                        if(tt == null){
+                            Token t8 = new Token(TipoToken.IDENTIFIER, lexema);
+                            tokens.add(t8);
+                        }
+                        else{
+                            Token t9 = new Token(tt, lexema);
+                            tokens.add(t9);
+                        }
+                        estado = 0;
+                        lexema = "";
+                        i--;
                 case 24:
                     if (c == '"') {
                         estado = 25;
@@ -159,11 +252,94 @@ public class Scanner {
                 case 32:
                     Token t = new Token(TipoToken.SLASH, lexema);
                     tokens.add(t);
+                    break;
+                case 15:
+                    if(Character.isDigit(c)){
+                        estado = 15;
+                        lexema += c;
+                    }
+                    else if(c == '.'){
+                        estado = 16;
+                        lexema += c;
+                        
+                    }
+                    else if(c == 'E' || c== 'e'){
+                        estado = 18;
+                        lexema += c;
+                    }
+                    else{
+                        estado = 22;
+                        //lexema += c;
+                    }
+                    break;
+                case 16:
+                    if(Character.isDigit(c)){
+                        estado = 17;
+                        lexema += c;
+                    }
+                    break;
+                case 17:
+                    if(Character.isDigit(c)){
+                        estado = 17;
+                        lexema += c;
+                    }
+                    else if(c == 'E' || c== 'e'){
+                        estado = 18;
+                        lexema += c;
+                    }
+                    else{
+                        estado = 23;
+                    }
+                    break;
+                case 18:
+                    if(Character.isDigit(c)){
+                        estado = 20;
+                        lexema += c;
+                    }
+                    else if(c == '+' || c == '-'){
+                        estado = 19;
+                        lexema += c;
+                    }
+                    break;
+                case 19:
+                    if(Character.isDigit(c)){
+                        estado = 20;
+                        lexema += c;
+                    }
+                    break;
+                case 20:
+                    if(Character.isDigit(c)){
+                        estado = 20;
+                        lexema += c;
+                    }
+                    else{
+                        estado = 21;
+                    }
+                    break;
+                case 21:
+                    //Generacion de token con notacion cientifica
+                    Token t12 = new Token(TipoToken.NUMBER, lexema,lexema);
+                    tokens.add(t12);
                     estado = 0;
                     lexema = "";
                     i--;
                     break;
-
+                case 22:
+                    //Vamos a crear el token de un numero entero ---------------
+                    Token t10 = new Token(TipoToken.NUMBER, lexema,Integer.valueOf(lexema));
+                    tokens.add(t10);
+                    estado = 0;
+                    lexema = "";
+                    i--;
+                    break;
+                case 23:
+                    //Vamos a crear el token de un numero flotante -------------
+                    Token t11 = new Token(TipoToken.NUMBER, lexema,Float.valueOf(lexema));
+                    tokens.add(t11);
+                    estado = 0;
+                    lexema = "";
+                    i--;
+                    break;
             }
         }
         return tokens;

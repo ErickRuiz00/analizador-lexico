@@ -61,7 +61,7 @@ public class Scanner {
                         estado = 13;
                         lexema += c;
                     } else if (Character.isDigit(c)) {
-                        estado = 11;
+                        estado = 15;
                         lexema += c;
                     } else if (c == '"') {
                         estado = 24;
@@ -87,7 +87,7 @@ public class Scanner {
                     tokens.add(t);
                     estado = 0;
                     lexema = "";
-                    i--;
+                    //i--;
                     break;
                 case 3:
                     // Vamos a crear el Token de mayor -------------------------
@@ -113,7 +113,7 @@ public class Scanner {
                     tokens.add(t2);
                     estado = 0;
                     lexema = "";
-                    i--;
+                    //i--;
                     break;
                 case 6:
                     // Vamos a crear el Token de menor -------------------------
@@ -130,7 +130,7 @@ public class Scanner {
                     }
                     else{
                         estado = 9;
-                        //lexema += c;
+                        lexema += c;
                     }
                     break;
                 case 8:
@@ -139,7 +139,7 @@ public class Scanner {
                     tokens.add(t4);
                     estado = 0;
                     lexema = "";
-                    i--;
+                    //i--;
                     break;
                 case 9:
                     // Vamos a crear el Token de igual -------------------------
@@ -165,7 +165,7 @@ public class Scanner {
                     tokens.add(t6);
                     estado = 0;
                     lexema = "";
-                    i--;
+                    //i--;
                     break;
                 case 12:
                     // Vamos a crear el Token de igual igual -------------------
@@ -205,13 +205,14 @@ public class Scanner {
                         lexema += c;
                     } else if (c == '\n') {
                         Interprete.error(1, "No se esperaba un salto de línea");
+                        System.out.println("No se esperaba un salto de línea");
                         estado = 0;
                         lexema = "";
                     } else lexema += c;
                     break;
                 case 25:
-                    Token t = new Token(TipoToken.STRING, lexema);
-                    tokens.add(t);
+                    Token t0 = new Token(TipoToken.STRING, lexema);
+                    tokens.add(t0);
 
                     estado = 0;
                     lexema = "";
@@ -240,6 +241,7 @@ public class Scanner {
                     // Estado de aceptación comentario multilinea
                     estado = 0;
                     lexema = "";
+                    System.out.println("Comentario multilinea");
                     break;
                 case 30:
                     if (c == '\n') estado = 31;
@@ -248,10 +250,14 @@ public class Scanner {
                     // Estado de aceptación comentario en línea
                     estado = 0;
                     lexema = "";
+                    System.out.println("Comentario en línea");
                     break;
                 case 32:
-                    Token t = new Token(TipoToken.SLASH, lexema);
-                    tokens.add(t);
+                    Token t01 = new Token(TipoToken.SLASH, lexema);
+                    tokens.add(t01);
+                    estado = 0;
+                    lexema = "";
+                    i--;
                     break;
                 case 15:
                     if(Character.isDigit(c)){

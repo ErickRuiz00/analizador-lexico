@@ -6,6 +6,7 @@ import java.util.Map;
 public class Scanner {
 
     private static final Map<String, TipoToken> palabrasReservadas;
+    private static final Map<String, TipoToken> Token_Caracter;
 
     static {
         palabrasReservadas = new HashMap<>();
@@ -23,6 +24,23 @@ public class Scanner {
         palabrasReservadas.put("var", TipoToken.VAR);
         palabrasReservadas.put("while", TipoToken.WHILE);
     }
+
+    // LEFT_PAREN, RIGHT_PAREN, LEFT_BRACE, RIGHT_BRACE,
+    //    COMMA, DOT, MINUS, PLUS, SEMICOLON, SLASH, STAR
+    static {
+        Token_Caracter = new HashMap<>();
+        Token_Caracter.put("(", TipoToken.LEFT_PAREN);
+        Token_Caracter.put(")", TipoToken.RIGHT_PAREN);
+        Token_Caracter.put("{", TipoToken.LEFT_BRACE);
+        Token_Caracter.put("}", TipoToken.RIGHT_BRACE);
+        Token_Caracter.put(",", TipoToken.COMMA);
+        Token_Caracter.put(".", TipoToken.DOT);
+        Token_Caracter.put("-", TipoToken.MINUS);
+        Token_Caracter.put("+", TipoToken.PLUS);
+        Token_Caracter.put(";", TipoToken.SEMICOLON);
+        Token_Caracter.put("/", TipoToken.SLASH);
+        Token_Caracter.put("*", TipoToken.STAR);
+    };
 
     private final String source;
 
@@ -68,6 +86,9 @@ public class Scanner {
                         lexema += c;
                     } else if (c == '/') {
                         estado = 26;
+                        lexema += c;
+                    } else{
+                        estado = 33;
                         lexema += c;
                     }
                     break;
@@ -188,17 +209,18 @@ public class Scanner {
                 case 14:
                     // Vamos a crear el Token de id o palabra reservada --------
                     TipoToken tt = palabrasReservadas.get(lexema);
-                        if(tt == null){
-                            Token t8 = new Token(TipoToken.IDENTIFIER, lexema);
-                            tokens.add(t8);
-                        }
-                        else{
-                            Token t9 = new Token(tt, lexema);
-                            tokens.add(t9);
-                        }
-                        estado = 0;
-                        lexema = "";
-                        i--;
+                    if(tt == null){
+                        Token t8 = new Token(TipoToken.IDENTIFIER, lexema);
+                        tokens.add(t8);
+                    }
+                    else{
+                        Token t9 = new Token(tt, lexema);
+                        tokens.add(t9);
+                    }
+                    estado = 0;
+                    lexema = "";
+                    //i--;
+                    break;
                 case 24:
                     if (c == '"') {
                         estado = 25;
@@ -346,6 +368,17 @@ public class Scanner {
                     lexema = "";
                     i--;
                     break;
+                case 33:
+                    TipoToken tt1 = Token_Caracter.get(lexema);
+                    if(tt1 == null)
+                        System.out.println("Error, caracter inválido");
+                    else{
+                        Token t21 = new Token(tt1, lexema);
+                        tokens.add(t21);
+                    }
+                    estado = 0;
+                    lexema = "";
+                    //i--;
             }
         }
         return tokens;

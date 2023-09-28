@@ -9,45 +9,44 @@ public class Scanner {
 
     static {
         palabrasReservadas = new HashMap<>();
-        palabrasReservadas.put("and",    TipoToken.AND);
-        palabrasReservadas.put("else",   TipoToken.ELSE);
-        palabrasReservadas.put("false",  TipoToken.FALSE);
-        palabrasReservadas.put("for",    TipoToken.FOR);
-        palabrasReservadas.put("fun",    TipoToken.FUN);
-        palabrasReservadas.put("if",     TipoToken.IF);
-        palabrasReservadas.put("null",   TipoToken.NULL);
-        palabrasReservadas.put("or",     TipoToken.OR);
-        palabrasReservadas.put("print",  TipoToken.PRINT);
+        palabrasReservadas.put("and", TipoToken.AND);
+        palabrasReservadas.put("else", TipoToken.ELSE);
+        palabrasReservadas.put("false", TipoToken.FALSE);
+        palabrasReservadas.put("for", TipoToken.FOR);
+        palabrasReservadas.put("fun", TipoToken.FUN);
+        palabrasReservadas.put("if", TipoToken.IF);
+        palabrasReservadas.put("null", TipoToken.NULL);
+        palabrasReservadas.put("or", TipoToken.OR);
+        palabrasReservadas.put("print", TipoToken.PRINT);
         palabrasReservadas.put("return", TipoToken.RETURN);
-        palabrasReservadas.put("true",   TipoToken.TRUE);
-        palabrasReservadas.put("var",    TipoToken.VAR);
-        palabrasReservadas.put("while",  TipoToken.WHILE);
+        palabrasReservadas.put("true", TipoToken.TRUE);
+        palabrasReservadas.put("var", TipoToken.VAR);
+        palabrasReservadas.put("while", TipoToken.WHILE);
     }
 
     private final String source;
 
     private final List<Token> tokens = new ArrayList<>();
-    
-    public Scanner(String source){
+
+    public Scanner(String source) {
         this.source = source + " ";
     }
 
     public List<Token> scan() throws Exception {
-        int estado = 0;
         String lexema = "";
+        int estado = 0;
         char c;
 
-        for(int i=0; i<source.length(); i++){
+        for (int i = 0; i < source.length(); i++) {
             c = source.charAt(i);
 
-            switch (estado){
+            switch (estado) {
                 case 0:
-                    if(Character.isLetter(c)){
-                        estado = 13;
+                    if (Character.isLetter(c)) {
+                        estado = 9;
                         lexema += c;
-                    }
-                    else if(Character.isDigit(c)){
-                        estado = 15;
+                    } else if (Character.isDigit(c)) {
+                        estado = 11;
                         lexema += c;
 
                         /*while(Character.isDigit(c)){
@@ -55,28 +54,33 @@ public class Scanner {
                             i++;
                             c = source.charAt(i);
                         }
-                        Token t = new Token(TipoToken.NUMBER, lexema, Integer.valueOf(lexema));
+                        Token t = new Token(TipoToken.NUMBER, lexema);
                         lexema = "";
                         estado = 0;
                         tokens.add(t);
                         */
-
-                    }
-                    break;
-
-                case 13:
-                    if(Character.isLetterOrDigit(c)){
-                        estado = 13;
+                    } else if (c == '"') {
+                        estado = 24;
+                        lexema += c;
+                    } else if (c == '/') {
+                        estado = 26;
                         lexema += c;
                     }
-                    else{
+
+                    break;
+
+                case 9:
+                    if (Character.isLetter(c) || Character.isDigit(c)) {
+                        estado = 9;
+                        lexema += c;
+                    } else {
+                        // Vamos a crear el Token de identificador o palabra reservada
                         TipoToken tt = palabrasReservadas.get(lexema);
 
-                        if(tt == null){
+                        if (tt == null) {
                             Token t = new Token(TipoToken.IDENTIFIER, lexema);
                             tokens.add(t);
-                        }
-                        else{
+                        } else {
                             Token t = new Token(tt, lexema);
                             tokens.add(t);
                         }
@@ -84,36 +88,84 @@ public class Scanner {
                         estado = 0;
                         lexema = "";
                         i--;
-
                     }
                     break;
-
-                case 15:
-                    if(Character.isDigit(c)){
-                        estado = 15;
+                case 11:
+                    if (Character.isDigit(c)) {
+                        estado = 11;
                         lexema += c;
-                    }
-                    else if(c == '.'){
+                    } else if (c == '.') {
 
-                    }
-                    else if(c == 'E'){
+                    } else if (c == 'E') {
 
-                    }
-                    else{
+                    } else {
                         Token t = new Token(TipoToken.NUMBER, lexema, Integer.valueOf(lexema));
                         tokens.add(t);
 
                         estado = 0;
                         lexema = "";
-                        i--;
                     }
                     break;
+                case 24:
+                    if (c == '"') {
+                        estado = 25;
+                        lexema += c;
+                    } else if (c == '\n') {
+                        Interprete.error(1, "No se esperaba un salto de línea");
+                        estado = 0;
+                        lexema = "";
+                    } else lexema += c;
+                    break;
+                case 25:
+                    Token t = new Token(TipoToken.STRING, lexema);
+                    tokens.add(t);
+
+                    estado = 0;
+                    lexema = "";
+                    break;
+                case 26:
+                    if (c == '*') {
+                        estado = 27;
+                        lexema += c;
+                    } else if (c == '/') {
+                        estado = 30;
+                        lexema += c;
+                    } else {
+                        estado = 32;
+                    }
+                    break;
+                case 27:
+                    // En este estado estamos dentro de un comentario multilinea, no
+                    // es necesario guardar el lexema porque no se generará un token.
+                    if (c == '*') estado = 28;
+                    break;
+                case 28:
+                    if (c == '/') estado = 29;
+                    else if (c != '*') estado = 27;
+                    break;
+                case 29:
+                    // Estado de aceptación comentario multilinea
+                    estado = 0;
+                    lexema = "";
+                    break;
+                case 30:
+                    if (c == '\n') estado = 31;
+                    break;
+                case 31:
+                    // Estado de aceptación comentario en línea
+                    estado = 0;
+                    lexema = "";
+                    break;
+                case 32:
+                    Token t = new Token(TipoToken.SLASH, lexema);
+                    tokens.add(t);
+                    estado = 0;
+                    lexema = "";
+                    i--;
+                    break;
+
             }
-
-
         }
-
-
         return tokens;
     }
 }

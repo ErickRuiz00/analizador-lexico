@@ -40,7 +40,8 @@ public class Scanner {
         Token_Caracter.put(";", TipoToken.SEMICOLON);
         Token_Caracter.put("/", TipoToken.SLASH);
         Token_Caracter.put("*", TipoToken.STAR);
-    };
+    }
+    ;
 
     private final String source;
 
@@ -52,6 +53,7 @@ public class Scanner {
 
     public List<Token> scan() throws Exception {
         String lexema = "";
+        Token t;
         int estado = 0;
         char c;
 
@@ -59,23 +61,19 @@ public class Scanner {
             c = source.charAt(i);
             switch (estado) {
                 case 0:
-                    if( c == '>'){
+                    if (c == '>') {
                         estado = 1;
                         lexema += c;
-                    }
-                    else if(c == '<'){
+                    } else if (c == '<') {
                         estado = 4;
                         lexema += c;
-                    }
-                    else if(c == '='){
+                    } else if (c == '=') {
                         estado = 7;
                         lexema += c;
-                    }
-                    else if(c == '!'){
+                    } else if (c == '!') {
                         estado = 10;
                         lexema += c;
-                    }
-                    else if(Character.isLetter(c)){
+                    } else if (Character.isLetter(c)) {
                         estado = 13;
                         lexema += c;
                     } else if (Character.isDigit(c)) {
@@ -87,22 +85,28 @@ public class Scanner {
                     } else if (c == '/') {
                         estado = 26;
                         lexema += c;
-                    } else{
+                    } else if(c == ' '){
                         estado = 33;
+                        lexema += c;
+                    } else {
+                        estado = 34;
                         lexema += c;
                     }
                     break;
                 case 1:
                     if (c == '=') {
-                        estado = 2;
                         lexema += c;
+                        t = new Token(TipoToken.GREATER_EQUAL, lexema);
+
+                    } else {
+                        t = new Token(TipoToken.GREATER, lexema);
+                        i--;
                     }
-                    else{
-                        estado = 3;
-                        //lexema += c;
-                    }
+                    tokens.add(t);
+                    lexema = "";
+                    estado = 0;
                     break;
-                case 2:
+                /* case 2:
                     // Vamos a crear el Token de mayor o igual -----------------
                     Token t = new Token(TipoToken.GREATER_EQUAL, lexema, null);
                     tokens.add(t);
@@ -118,17 +122,21 @@ public class Scanner {
                     lexema = "";
                     i--;
                     break;
+                 */
+
                 case 4:
                     if (c == '=') {
-                        estado = 5;
                         lexema += c;
+                        t = new Token(TipoToken.LESS_EQUAL, lexema);
+                    } else {
+                        t = new Token(TipoToken.LESS, lexema);
+                        i--;
                     }
-                    else{
-                        estado = 6;
-                        //lexema += c;
-                    }
+                    tokens.add(t);
+                    lexema = "";
+                    estado = 0;
                     break;
-                case 5:
+                /*case 5:
                     // Vamos a crear el Token de menor o igual -----------------
                     Token t2 = new Token(TipoToken.LESS_EQUAL, lexema, null);
                     tokens.add(t2);
@@ -143,18 +151,21 @@ public class Scanner {
                     estado = 0;
                     lexema = "";
                     i--;
-                    break;
+                    break; */
                 case 7:
                     if (c == '=') {
-                        estado = 8;
                         lexema += c;
+                        t = new Token(TipoToken.EQUAL_EQUAL, lexema);
+                    } else {
+                        t = new Token(TipoToken.EQUAL, lexema);
+                        i--;
                     }
-                    else{
-                        estado = 9;
-                        lexema += c;
-                    }
+
+                    tokens.add(t);
+                    lexema = "";
+                    estado = 0;
                     break;
-                case 8:
+                /*case 8:
                     // Vamos a crear el Token de igual igual -------------------
                     Token t4 = new Token(TipoToken.EQUAL_EQUAL, lexema, null);
                     tokens.add(t4);
@@ -169,18 +180,21 @@ public class Scanner {
                     estado = 0;
                     lexema = "";
                     i--;
-                    break;
+                    break; */
                 case 10:
                     if (c == '=') {
-                        estado = 11;
                         lexema += c;
+                        t = new Token(TipoToken.BANG_EQUAL, lexema);
+                    } else {
+                        t = new Token(TipoToken.BANG, lexema);
+                        i--;
                     }
-                    else{
-                        estado = 12;
-                        //lexema += c;
-                    }
+
+                    tokens.add(t);
+                    lexema = "";
+                    estado = 0;
                     break;
-                case 11:
+                /*case 11:
                     // Vamos a crear el Token de diferente -------------------
                     Token t6 = new Token(TipoToken.BANG_EQUAL, lexema, null);
                     tokens.add(t6);
@@ -195,18 +209,24 @@ public class Scanner {
                     estado = 0;
                     lexema = "";
                     i--;
-                    break;
+                    break; */
                 case 13:
-                    if(Character.isLetter(c) || Character.isDigit(c)){
-                        estado = 13;
+                    if (Character.isLetter(c) || Character.isDigit(c)) {
                         lexema += c;
-                    }
-                    else{
-                        estado = 14;
-                        //lexema += c;
+                    } else {
+                        TipoToken tt = palabrasReservadas.get(lexema);
+                        if (tt == null) {
+                            t = new Token(TipoToken.IDENTIFIER, lexema);
+                        } else {
+                            t = new Token(tt, lexema);
+                        }
+
+                        tokens.add(t);
+                        lexema = "";
+                        estado = 0;
                     }
                     break;
-                case 14:
+                /*case 14:
                     // Vamos a crear el Token de id o palabra reservada --------
                     TipoToken tt = palabrasReservadas.get(lexema);
                     if(tt == null){
@@ -220,131 +240,81 @@ public class Scanner {
                     estado = 0;
                     lexema = "";
                     //i--;
-                    break;
-                case 24:
-                    if (c == '"') {
-                        estado = 25;
-                        lexema += c;
-                    } else if (c == '\n') {
-                        Interprete.error(1, "No se esperaba un salto de línea");
-                        System.out.println("No se esperaba un salto de línea");
-                        estado = 0;
-                        lexema = "";
-                    } else lexema += c;
-                    break;
-                case 25:
-                    Token t0 = new Token(TipoToken.STRING, lexema);
-                    tokens.add(t0);
-
-                    estado = 0;
-                    lexema = "";
-                    break;
-                case 26:
-                    if (c == '*') {
-                        estado = 27;
-                        lexema += c;
-                    } else if (c == '/') {
-                        estado = 30;
-                        lexema += c;
-                    } else {
-                        estado = 32;
-                    }
-                    break;
-                case 27:
-                    // En este estado estamos dentro de un comentario multilinea, no
-                    // es necesario guardar el lexema porque no se generará un token.
-                    if (c == '*') estado = 28;
-                    break;
-                case 28:
-                    if (c == '/') estado = 29;
-                    else if (c != '*') estado = 27;
-                    break;
-                case 29:
-                    // Estado de aceptación comentario multilinea
-                    estado = 0;
-                    lexema = "";
-                    System.out.println("Comentario multilinea");
-                    break;
-                case 30:
-                    if (c == '\n') estado = 31;
-                    break;
-                case 31:
-                    // Estado de aceptación comentario en línea
-                    estado = 0;
-                    lexema = "";
-                    System.out.println("Comentario en línea");
-                    break;
-                case 32:
-                    Token t01 = new Token(TipoToken.SLASH, lexema);
-                    tokens.add(t01);
-                    estado = 0;
-                    lexema = "";
-                    i--;
-                    break;
+                    break; */
                 case 15:
-                    if(Character.isDigit(c)){
-                        estado = 15;
+                    if (Character.isDigit(c)) {
                         lexema += c;
-                    }
-                    else if(c == '.'){
+                    } else if (c == '.') {
                         estado = 16;
                         lexema += c;
-                        
-                    }
-                    else if(c == 'E' || c== 'e'){
+
+                    } else if (c == 'E' || c == 'e') {
                         estado = 18;
                         lexema += c;
-                    }
-                    else{
-                        estado = 22;
-                        //lexema += c;
+                    } else {
+                        t = new Token(TipoToken.NUMBER, lexema, lexema);
+                        tokens.add(t);
+                        lexema = "";
+                        estado = 0;
+                        i--;
                     }
                     break;
                 case 16:
-                    if(Character.isDigit(c)){
+                    if (Character.isDigit(c)) {
                         estado = 17;
                         lexema += c;
+                    } else {
+                        Interprete.error(1, "Se esperaba un digito");
+                        System.out.println("Se esperaba un dígito");
                     }
                     break;
                 case 17:
-                    if(Character.isDigit(c)){
-                        estado = 17;
+                    if (Character.isDigit(c)) {
                         lexema += c;
-                    }
-                    else if(c == 'E' || c== 'e'){
+                    } else if (c == 'E' || c == 'e') {
                         estado = 18;
                         lexema += c;
-                    }
-                    else{
-                        estado = 23;
+                    } else {
+                        t = new Token(TipoToken.NUMBER, lexema, lexema);
+                        tokens.add(t);
+                        lexema = "";
+                        estado = 0;
+                        i--;
                     }
                     break;
                 case 18:
-                    if(Character.isDigit(c)){
+                    if (Character.isDigit(c)) {
                         estado = 20;
                         lexema += c;
-                    }
-                    else if(c == '+' || c == '-'){
+                    } else if (c == '+' || c == '-') {
                         estado = 19;
                         lexema += c;
+                    } else {
+                        Interprete.error(1, "Se  esperaba un digito, '+' o '-'");
+                        System.out.println("Se  esperaba un digito, '+' o '-'");
                     }
                     break;
                 case 19:
-                    if(Character.isDigit(c)){
+                    if (Character.isDigit(c)) {
                         estado = 20;
                         lexema += c;
+                    } else {
+                        Interprete.error(1, "Se esperaba un digito");
+                        System.out.println("Se esperaba un digito");
                     }
                     break;
                 case 20:
-                    if(Character.isDigit(c)){
-                        estado = 20;
+                    if (Character.isDigit(c)) {
                         lexema += c;
-                    }
-                    else{
-                        estado = 21;
+                    } else {
+                        t = new Token(TipoToken.NUMBER, lexema, lexema);
+                        tokens.add(t);
+                        lexema = "";
+                        estado = 0;
+                        i--;
                     }
                     break;
-                case 21:
+                /*case 21:
                     //Generacion de token con notacion cientifica
                     Token t12 = new Token(TipoToken.NUMBER, lexema,lexema);
                     tokens.add(t12);
@@ -367,8 +337,94 @@ public class Scanner {
                     estado = 0;
                     lexema = "";
                     i--;
+                    break; */
+                case 24:
+                    if(c != '"'){
+                        estado = 24;
+                        lexema += c;
+                    }
+                    else if( c == '"'){
+                        estado = 25;
+                        lexema += c;
+                    }
+                    else if (c == '\n') {
+                        Interprete.error(1, "No se esperaba un salto de línea");
+                        System.out.println("No se esperaba un salto de línea");
+                        estado = 0;
+                        lexema = "";
+                    }
                     break;
+                case 25:
+                    Token t13 = new Token(TipoToken.STRING, lexema,null);
+                    tokens.add(t13);
+                    estado = 0;
+                    lexema = "";
+                    i--;
+                    break;
+                case 26:
+                    if (c == '*') {
+                        estado = 27;
+                        lexema += c;
+                    } else if (c == '/') {
+                        estado = 30;
+                        lexema += c;
+                    } else {
+                        t = new Token(TipoToken.SLASH, lexema);
+                        tokens.add(t);
+                        lexema = "";
+                        estado = 0;
+                        i--;
+                    }
+                    break;
+                case 27:
+                    // En este estado estamos dentro de un comentario multilinea, no
+                    // es necesario guardar el lexema porque no se generará un token.
+                    if (c == '*') {
+                        estado = 28;
+                    }
+                    break;
+                case 28:
+                    if (c == '/') {
+                        estado = 0;
+                        lexema = "";
+                        //System.out.println("Comentario multilinea");
+                    } else if (c != '*') {
+                        estado = 27;
+                    }
+                    break;
+                /*case 29:
+                    // Estado de aceptación comentario multilinea
+                    estado = 0;
+                    lexema = "";
+                    System.out.println("Comentario multilinea");
+                    break; */
+                case 30:
+                    if (c == '\n') {
+                        estado = 0;
+                        lexema = "";
+                        System.out.println("Comentario en linea");
+                    }
+                    break;
+                /*case 31:
+                    // Estado de aceptación comentario en línea
+                    estado = 0;
+                    lexema = "";
+                    System.out.println("Comentario en línea");
+                    break;*/
+                /*case 32:
+                    Token t01 = new Token(TipoToken.SLASH, lexema);
+                    tokens.add(t01);
+                    estado = 0;
+                    lexema = "";
+                    i--;
+                    break; */
                 case 33:
+                    //System.out.println("Se detecto un espacio");
+                    estado = 0;
+                    lexema = "";
+                    i--;
+                    break;
+                case 34:
                     TipoToken tt1 = Token_Caracter.get(lexema);
                     if(tt1 == null)
                         System.out.println("Error, caracter inválido");
@@ -378,7 +434,8 @@ public class Scanner {
                     }
                     estado = 0;
                     lexema = "";
-                    //i--;
+                    i--;
+                    break;
             }
         }
         return tokens;

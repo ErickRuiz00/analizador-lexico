@@ -50,8 +50,36 @@ public class Scanner {
     public Scanner(String source) {
         this.source = source + " ";
     }
+    
+    public String aCadena(String lexema, char c){
+        String res = "";
+        for(int i = 0; i < lexema.length(); i++){
+            if(lexema.charAt(i) != c)
+                res += lexema.charAt(i);
+        }
+        
+        return res;
+    }
+    /*
+    public String aNumbers(String lexema, char c){
+        String res = "";
+        int i = 0;
+        
+        // Ceros por la izquierda;
+        while(lexema.charAt(i) == c) i++;
+  
+        for(; i < lexema.length() ; i++)
+            res += lexema.charAt(i);
+        
+        if(res.charAt(0) == '.')
+            res = '0' + res;
+        
+        return res;
+    }
+    */
 
     public List<Token> scan() throws Exception {
+        int bandera = 0;
         String lexema = "";
         Token t;
         int estado = 0;
@@ -224,6 +252,7 @@ public class Scanner {
                         tokens.add(t);
                         lexema = "";
                         estado = 0;
+                        i--;
                     }
                     break;
                 /*case 14:
@@ -252,7 +281,7 @@ public class Scanner {
                         estado = 18;
                         lexema += c;
                     } else {
-                        t = new Token(TipoToken.NUMBER, lexema, lexema);
+                        t = new Token(TipoToken.NUMBER, lexema, Integer.valueOf(lexema));
                         tokens.add(t);
                         lexema = "";
                         estado = 0;
@@ -271,11 +300,12 @@ public class Scanner {
                 case 17:
                     if (Character.isDigit(c)) {
                         lexema += c;
-                    } else if (c == 'E' || c == 'e') {
+                    } else if (c == 'E') {
                         estado = 18;
                         lexema += c;
                     } else {
-                        t = new Token(TipoToken.NUMBER, lexema, lexema);
+                        // Token numero flotante - Equivalente estado 23
+                        t = new Token(TipoToken.NUMBER, lexema, Float.valueOf(lexema));
                         tokens.add(t);
                         lexema = "";
                         estado = 0;
@@ -307,7 +337,8 @@ public class Scanner {
                     if (Character.isDigit(c)) {
                         lexema += c;
                     } else {
-                        t = new Token(TipoToken.NUMBER, lexema, lexema);
+                        // Token notación cientifica ---------------------------
+                        t = new Token(TipoToken.NUMBER, lexema, Float.valueOf(lexema));
                         tokens.add(t);
                         lexema = "";
                         estado = 0;
@@ -342,6 +373,7 @@ public class Scanner {
                     if(c != '"'){
                         estado = 24;
                         lexema += c;
+                        bandera = 1;
                     }
                     else if( c == '"'){
                         estado = 25;
@@ -355,11 +387,12 @@ public class Scanner {
                     }
                     break;
                 case 25:
-                    Token t13 = new Token(TipoToken.STRING, lexema,null);
+                    Token t13 = new Token(TipoToken.STRING, lexema, aCadena(lexema, '"'));
                     tokens.add(t13);
                     estado = 0;
                     lexema = "";
                     i--;
+                    bandera = 0;
                     break;
                 case 26:
                     if (c == '*') {
@@ -437,6 +470,9 @@ public class Scanner {
                     i--;
                     break;
             }
+        }
+        if(bandera == 1){
+            System.out.println("ERROR");
         }
         return tokens;
     }

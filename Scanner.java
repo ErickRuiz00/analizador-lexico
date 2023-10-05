@@ -113,7 +113,7 @@ public class Scanner {
                     } else if (c == '/') {
                         estado = 26;
                         lexema += c;
-                    } else if(c == ' '){
+                    } else if(c == ' ' || c == '\n'){
                         estado = 33;
                         lexema += c;
                     } else {
@@ -369,8 +369,14 @@ public class Scanner {
                     lexema = "";
                     i--;
                     break; */
-                case 24:
-                    if(c != '"'){
+                case 24:              
+                    if (c == '\n') {
+                        Interprete.error(1, "No se esperaba un salto de línea");
+                        System.out.println("No se esperaba un salto de línea");
+                        estado = 0;
+                        lexema = "";
+                    }
+                    else if(c != '"'){
                         estado = 24;
                         lexema += c;
                         bandera = 1;
@@ -378,12 +384,6 @@ public class Scanner {
                     else if( c == '"'){
                         estado = 25;
                         lexema += c;
-                    }
-                    else if (c == '\n') {
-                        Interprete.error(1, "No se esperaba un salto de línea");
-                        System.out.println("No se esperaba un salto de línea");
-                        estado = 0;
-                        lexema = "";
                     }
                     break;
                 case 25:
@@ -459,11 +459,12 @@ public class Scanner {
                     break;
                 case 34:
                     TipoToken tt1 = Token_Caracter.get(lexema);
-                    if(tt1 == null)
-                        System.out.println("Error, caracter inválido");
-                    else{
+                    if(tt1 != null){
                         Token t21 = new Token(tt1, lexema);
                         tokens.add(t21);
+                    }                        
+                    else{
+                        System.out.println("Error, caracter inválido ");                        
                     }
                     estado = 0;
                     lexema = "";

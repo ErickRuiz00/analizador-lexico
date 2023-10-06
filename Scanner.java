@@ -60,29 +60,11 @@ public class Scanner {
         
         return res;
     }
-    /*
-    public String aNumbers(String lexema, char c){
-        String res = "";
-        int i = 0;
-        
-        // Ceros por la izquierda;
-        while(lexema.charAt(i) == c) i++;
-  
-        for(; i < lexema.length() ; i++)
-            res += lexema.charAt(i);
-        
-        if(res.charAt(0) == '.')
-            res = '0' + res;
-        
-        return res;
-    }
-    */
 
     public List<Token> scan() throws Exception {
-        int bandera = 0;
+        int bandera = 0, estado = 0, lines = 1;
         String lexema = "";
         Token t;
-        int estado = 0;
         char c;
 
         for (int i = 0; i < source.length(); i++) {
@@ -293,8 +275,7 @@ public class Scanner {
                         estado = 17;
                         lexema += c;
                     } else {
-                        Interprete.error(1, "Se esperaba un digito");
-                        System.out.println("Se esperaba un dígito");
+                        Interprete.error(lines, "Se esperaba: [0-9] -> " + lexema);
                     }
                     break;
                 case 17:
@@ -320,8 +301,7 @@ public class Scanner {
                         estado = 19;
                         lexema += c;
                     } else {
-                        Interprete.error(1, "Se  esperaba un digito, '+' o '-'");
-                        System.out.println("Se  esperaba un digito, '+' o '-'");
+                        Interprete.error(lines, "Se  esperaba: [0-9, +, -] -> " + lexema);
                     }
                     break;
                 case 19:
@@ -329,8 +309,7 @@ public class Scanner {
                         estado = 20;
                         lexema += c;
                     } else {
-                        Interprete.error(1, "Se esperaba un digito");
-                        System.out.println("Se esperaba un digito");
+                        Interprete.error(lines, "Se esperaba: [0-9, +, -] -> " + lexema);
                     }
                     break;
                 case 20:
@@ -371,17 +350,17 @@ public class Scanner {
                     break; */
                 case 24:              
                     if (c == '\n') {
-                        Interprete.error(1, "No se esperaba un salto de línea");
-                        System.out.println("No se esperaba un salto de línea");
+                        Interprete.error(lines, "No se esperaba un salto de línea -> " + lexema);
                         estado = 0;
                         lexema = "";
+                        lines++;
                     }
                     else if(c != '"'){
                         estado = 24;
                         lexema += c;
                         bandera = 1;
                     }
-                    else if( c == '"'){
+                    else if(c == '"'){
                         estado = 25;
                         lexema += c;
                     }
@@ -420,7 +399,7 @@ public class Scanner {
                     if (c == '/') {
                         estado = 0;
                         lexema = "";
-                        //System.out.println("Comentario multilinea");
+                        System.out.println("Comentario multilinea");
                     } else if (c != '*') {
                         estado = 27;
                     }
@@ -436,6 +415,7 @@ public class Scanner {
                         estado = 0;
                         lexema = "";
                         System.out.println("Comentario en linea");
+                        lines++;
                     }
                     break;
                 /*case 31:
@@ -458,14 +438,15 @@ public class Scanner {
                     i--;
                     break;
                 case 34:
+                    // Tokens de un caracter
                     TipoToken tt1 = Token_Caracter.get(lexema);
                     if(tt1 != null){
                         Token t21 = new Token(tt1, lexema);
                         tokens.add(t21);
                     }                        
-                    else{
-                        System.out.println("Error, caracter inválido ");                        
-                    }
+                    else if(c == ' ') ;
+                    else if(c == '\n') lines++;
+                    else Interprete.error(lines, "No se reconoce el caracter: " + lexema);
                     estado = 0;
                     lexema = "";
                     i--;

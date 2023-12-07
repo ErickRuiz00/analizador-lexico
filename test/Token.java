@@ -20,6 +20,7 @@ public class Token {
         this.literal = literal;
     }
     
+    
     @Override
     public boolean equals(Object o) {
         if (!(o instanceof Token)) {

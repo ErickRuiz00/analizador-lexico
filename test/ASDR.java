@@ -8,12 +8,12 @@ public class ASDR implements Parser{
     private boolean hayErrores = false;
     private Token preanalisis;
     private final List<Token> tokens;
-    private List<Statement> statementsTree;
+    private List<Statement> statementTree;
 
-    public List<Statement> getStatementsTree() {
-        return statementsTree;
+    public List<Statement> getStatementTree() {
+        return statementTree;
     }
-
+    
     public ASDR(List<Token> tokens){
         this.tokens = tokens;
         preanalisis = this.tokens.get(i);
@@ -21,13 +21,12 @@ public class ASDR implements Parser{
     
     @Override
     public boolean parse() {
-        statementsTree = PROGRAM();
-        
+        statementTree = PROGRAM();
         if(preanalisis.tipo == TipoToken.EOF && !hayErrores){
-            System.out.println("Consulta correcta");
+            System.out.println("Linea correcta");
             return true;
         }else
-            System.out.println("Consulta incorrecta");
+            System.out.println("Linea incorrecta");
         
         return false;
     }
@@ -35,9 +34,7 @@ public class ASDR implements Parser{
     // PROGRAM -> DECLARATION 
     private List<Statement> PROGRAM(){
         List<Statement> statements = new ArrayList();
-        DECLARATION(statements);
-
-        return statements;
+        return DECLARATION(statements);
     }
     
     /* DECLARATION -> FUN_DECL DECLARATION
@@ -45,26 +42,27 @@ public class ASDR implements Parser{
                       STATEMENT DECLARATION
                       EPSILON               */
     // Declaraciones -----------------------------------------------------------------------------------------
-    private void DECLARATION(List<Statement> statements){
+    private List<Statement> DECLARATION(List<Statement> statements){
         if(hayErrores) 
-            return;
+            return null;
         switch (preanalisis.tipo) {
             case FUN -> { 
                 Statement stmt = FUN_DECL();
                 statements.add(stmt);
-                DECLARATION(statements);
+                return DECLARATION(statements);
             }
             case VAR -> { 
                 Statement stmt = VAR_DECL();
                 statements.add(stmt);
-                DECLARATION(statements);
+                return DECLARATION(statements);
             }
             case BANG, MINUS, TRUE, FALSE, NULL, NUMBER, STRING, IDENTIFIER, LEFT_PAREN, FOR, IF, PRINT, RETURN, WHILE, LEFT_BRACE -> {   
                 Statement stmt = STATEMENT();
                 statements.add(stmt);
-                DECLARATION(statements);
+                return DECLARATION(statements);
             }
         }
+        return null;
     }
     
     // FUN_DECL -> fun FUNCTION

@@ -9,6 +9,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
+import Expr_stmt_clases.*;
 
 public class Interprete {
     
@@ -56,10 +57,10 @@ public class Interprete {
             /*for(Token token : tokens){
                 System.out.println(token);
             } */
-            
             Parser parser = new ASDR(tokens);
             parser.parse();
-        }
+            List<Statement> tree = parser.getStatementTree();
+       }  
         catch (Exception ex){
             ex.printStackTrace();
         }

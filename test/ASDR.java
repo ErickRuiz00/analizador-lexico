@@ -34,7 +34,9 @@ public class ASDR implements Parser{
     // PROGRAM -> DECLARATION 
     private List<Statement> PROGRAM(){
         List<Statement> statements = new ArrayList();
-        return DECLARATION(statements);
+        DECLARATION(statements);
+        return statements;
+        
     }
     
     /* DECLARATION -> FUN_DECL DECLARATION
@@ -42,27 +44,26 @@ public class ASDR implements Parser{
                       STATEMENT DECLARATION
                       EPSILON               */
     // Declaraciones -----------------------------------------------------------------------------------------
-    private List<Statement> DECLARATION(List<Statement> statements){
+    private void DECLARATION(List<Statement> statements){
         if(hayErrores) 
-            return null;
+            return;
         switch (preanalisis.tipo) {
             case FUN -> { 
                 Statement stmt = FUN_DECL();
                 statements.add(stmt);
-                return DECLARATION(statements);
+                DECLARATION(statements);
             }
             case VAR -> { 
                 Statement stmt = VAR_DECL();
                 statements.add(stmt);
-                return DECLARATION(statements);
+                DECLARATION(statements);
             }
             case BANG, MINUS, TRUE, FALSE, NULL, NUMBER, STRING, IDENTIFIER, LEFT_PAREN, FOR, IF, PRINT, RETURN, WHILE, LEFT_BRACE -> {   
                 Statement stmt = STATEMENT();
                 statements.add(stmt);
-                return DECLARATION(statements);
+                DECLARATION(statements);
             }
         }
-        return null;
     }
     
     // FUN_DECL -> fun FUNCTION

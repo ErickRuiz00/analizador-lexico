@@ -60,6 +60,7 @@ public class Interprete {
             Parser parser = new ASDR(tokens);
             parser.parse();
             List<Statement> tree = parser.getStatementTree();
+            System.out.println(tree);
        }  
         catch (Exception ex){
             ex.printStackTrace();

@@ -20,19 +20,25 @@ public class ASDR implements Parser{
     }
     
     @Override
-    public boolean parse() {
-        statementTree = PROGRAM();
-        if(preanalisis.tipo == TipoToken.EOF && !hayErrores){
-            System.out.println("Linea correcta");
-            return true;
-        }else
-            System.out.println("Linea incorrecta");
+    public boolean parse() throws ParserException {
+        try{
+            statementTree = PROGRAM();
+            if(preanalisis.tipo == TipoToken.EOF && !hayErrores){
+                System.out.println("Linea correcta");
+                return true;
+            }else
+                System.out.println("Linea incorrecta");
+        }catch (ParserException e){
+            System.out.println(e.getMessage());
+            return false;
+        }
+
         
         return false;
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////
     // PROGRAM -> DECLARATION 
-    private List<Statement> PROGRAM(){
+    private List<Statement> PROGRAM() throws ParserException{
         List<Statement> statements = new ArrayList();
         DECLARATION(statements);
         return statements;
@@ -44,9 +50,7 @@ public class ASDR implements Parser{
                       STATEMENT DECLARATION
                       EPSILON               */
     // Declaraciones -----------------------------------------------------------------------------------------
-    private void DECLARATION(List<Statement> statements){
-        if(hayErrores) 
-            return;
+    private void DECLARATION(List<Statement> statements) throws ParserException {
         switch (preanalisis.tipo) {
             case FUN -> { 
                 Statement stmt = FUN_DECL();
@@ -67,47 +71,33 @@ public class ASDR implements Parser{
     }
     
     // FUN_DECL -> fun FUNCTION
-    private Statement FUN_DECL(){
-        if(hayErrores)
-            return null;
+    private Statement FUN_DECL() throws ParserException{
         if(preanalisis.tipo == TipoToken.FUN){
             match(TipoToken.FUN);
             return FUNCTION();
-        }else{
-            hayErrores = true;
-            System.out.println("Se esperaba 'fun'");
-            return null;
         }
+        return null;
     }
     
     // VAR_DECL -> var id VAR_INIT ;
-    private Statement VAR_DECL(){
-        if(hayErrores)
-            return null;
+    private Statement VAR_DECL() throws ParserException{
         if(preanalisis.tipo == TipoToken.VAR){
             match(TipoToken.VAR);
             match(TipoToken.IDENTIFIER);
             Token name = previous();
             Expression initializer = VAR_INIT();
             match(TipoToken.SEMICOLON);
-            Statement stmnt = new StmtVar(name,initializer);
-            return stmnt;
-        }else{
-            hayErrores = true;
-            System.out.println("Se esperaba 'var'");
-            return null;
+            return new StmtVar(name,initializer);
         }
+        return null;
     }
     
     // VAR_INIT -> = EXPRESSION 
     //          -> ε
-    private Expression VAR_INIT(){
-        if(hayErrores)
-            return null;
+    private Expression VAR_INIT() throws ParserException{
         if(preanalisis.tipo == TipoToken.EQUAL){
             match(TipoToken.EQUAL);
-            Expression expr = EXPRESSION();
-            return expr;
+            return EXPRESSION();
         }
         return null;
     }
@@ -122,7 +112,7 @@ public class ASDR implements Parser{
     */
     // ------------------------------------------------------------------------------------------------
     // Sentencias -------------------------------------------------------------------------------------
-    private Statement STATEMENT(){
+    private Statement STATEMENT() throws ParserException{
         switch (preanalisis.tipo) {
             case BANG, MINUS, TRUE, FALSE, NULL, NUMBER, STRING, IDENTIFIER, LEFT_PAREN ->{
                 return EXPR_STMT();
@@ -146,36 +136,31 @@ public class ASDR implements Parser{
                 return BLOCK();
             }
             default -> {
-                    hayErrores = true;
-                    System.out.println("Se esperaba un statement");
-                    return null;
+                String message = "Error en la linea " + preanalisis.getLine() +
+                        preanalisis.getPosition() + ". Se esperaba un statement";
+                throw new ParserException(message);
             }
         }
     }
 
     // EXPR_STMT -> EXPRESSION;
-    private Statement EXPR_STMT(){
-        if(hayErrores)
-            return null;   
+    private Statement EXPR_STMT() throws ParserException{
         switch (preanalisis.tipo) {
             case BANG, MINUS, TRUE, FALSE, NULL, NUMBER, STRING, IDENTIFIER, LEFT_PAREN -> {  
                 Expression expr = EXPRESSION();
                 match(TipoToken.SEMICOLON);
-                Statement stexpr = new StmtExpression(expr);
-                return stexpr;
+                return new StmtExpression(expr);
             }
             default -> {
-                hayErrores = true;    
-                System.out.println("Se esperaba una expresión");
-                return null;
+                String message = "Error en la linea " + preanalisis.getLine() +
+                        preanalisis.getPosition() + ". Se esperaba un expr_stmt";
+                throw new ParserException(message);
             }
         }
     }
     
     // FOR_STMT -> for ( FOR_STMT_1 FOR_STMT_2 FOR_STMT_3 ) STATEMENT
-    private Statement FOR_STMT(){
-        if(hayErrores)
-            return null;      
+    private Statement FOR_STMT() throws ParserException{
         if(preanalisis.tipo == TipoToken.FOR){
             match(TipoToken.FOR);
             match(TipoToken.LEFT_PAREN);
@@ -197,8 +182,6 @@ public class ASDR implements Parser{
             }
             return body;
         }else{
-            hayErrores = true;
-            System.out.println("Se esperaba 'for'");
             return null;
         }
     } 
@@ -207,26 +190,22 @@ public class ASDR implements Parser{
                -> EXPR_STMT
                -> ;
     */
-    private Statement FOR_STMT_1(){
-        if(hayErrores)
-            return null;        
+    private Statement FOR_STMT_1() throws ParserException{
         switch (preanalisis.tipo) {
             case VAR ->{
-                Statement stmnt = VAR_DECL();
-                return stmnt;
+                return VAR_DECL();
             }
             case BANG, MINUS, TRUE, FALSE, NULL, NUMBER, STRING, IDENTIFIER, LEFT_PAREN ->{
-                Statement stmnt = EXPR_STMT();
-                return stmnt;
+                return EXPR_STMT();
             }
             case SEMICOLON ->{ 
                 match(TipoToken.SEMICOLON);
                 return null;
             }
             default -> {
-                hayErrores = true;
-                System.out.println("Se esperaba 'var', una expresion o ';'");
-                return null;
+                String message = "Error en la linea " + preanalisis.getLine() +
+                        preanalisis.getPosition() + ". Se esperaba un inicializador o ;";
+                throw new ParserException(message);
             }
         }
     }
@@ -235,9 +214,7 @@ public class ASDR implements Parser{
     FOR_STMT_2 -> EXPRESSION;
                -> ;
     */
-    private Expression FOR_STMT_2(){
-        if(hayErrores)
-            return null;     
+    private Expression FOR_STMT_2() throws ParserException{
         switch (preanalisis.tipo) {
             case BANG, MINUS, TRUE, FALSE, NULL, NUMBER, STRING, IDENTIFIER, LEFT_PAREN -> {
                 Expression expr = EXPRESSION();
@@ -249,9 +226,9 @@ public class ASDR implements Parser{
                 return null;
             }
             default -> {
-                hayErrores = true;
-                System.out.println("Se esperaba una expresión o ';'");
-                return null;
+                String message = "Error en la linea " + preanalisis.getLine() +
+                        preanalisis.getPosition() + ". Se esperaba una condición o ;";
+                throw new ParserException(message);
             }
         }
     }
@@ -259,22 +236,17 @@ public class ASDR implements Parser{
     /*
     FOR_STMT_3 -> EXPRESSION
                -> Ɛ         */
-    private Expression FOR_STMT_3(){
-        if(hayErrores)
-            return null;    
+    private Expression FOR_STMT_3() throws ParserException{
         switch (preanalisis.tipo) {
             case BANG, MINUS, TRUE, FALSE, NULL, NUMBER, STRING, IDENTIFIER, LEFT_PAREN ->{
-                Expression expr = EXPRESSION();
-                return expr;
+                return EXPRESSION();
             }
         }
         return null;
     }
     
     //IF_STMT -> if (EXPRESSION) STATEMENT ELSE_STATEMENT
-    private Statement IF_STMT(){
-        if(hayErrores)
-            return null;
+    private Statement IF_STMT() throws ParserException{
         if(preanalisis.tipo == TipoToken.IF){
             match(TipoToken.IF);
             match(TipoToken.LEFT_PAREN);
@@ -282,31 +254,25 @@ public class ASDR implements Parser{
             match(TipoToken.RIGHT_PAREN);
             Statement thenBranch = STATEMENT();
             Statement elseBranch = ELSE_STATEMENT();
-            Statement ifstmt = new StmtIf(condition, thenBranch, elseBranch);
-            return ifstmt;
+            return new StmtIf(condition, thenBranch, elseBranch);
         }else{
-            hayErrores = true;
-            System.out.println("Se esperaba if");
-            return null;
+            String message = "Error en la linea " + preanalisis.getLine() +
+                    preanalisis.getPosition() + ". Se esperaba una condición";
+            throw new ParserException(message);
         }
     }
     /*
     ELSE_STATEMENT -> else STATEMENT
                    -> Ɛ         */
-    private Statement ELSE_STATEMENT(){
-        if(hayErrores)
-            return null;
+    private Statement ELSE_STATEMENT() throws ParserException{
         if(preanalisis.tipo == TipoToken.ELSE){
             match(TipoToken.ELSE);
-            Statement stmt = STATEMENT();
-            return stmt;
+            return STATEMENT();
         }
         return null;
     }
     // PRINT_STMT -> print EXPRESSION ;
-    private Statement PRINT_STMT(){
-        if(hayErrores)
-            return null;
+    private Statement PRINT_STMT() throws ParserException{
         if(preanalisis.tipo == TipoToken.PRINT){
             match(TipoToken.PRINT);
             Expression expr = EXPRESSION();
@@ -314,75 +280,63 @@ public class ASDR implements Parser{
             match(TipoToken.SEMICOLON);
             return pstmt;
         }else{
-            hayErrores = true;
-            System.out.println("Se esperaba print");
-            return null;
+            String message = "Error en la linea " + preanalisis.getLine() +
+                    preanalisis.getPosition() + ". Se esperaba un print_stmt";
+            throw new ParserException(message);
         }
         
     }
     //RETURN_STMT -> return RETURN_EXP_OPC ;
-    private Statement RETURN_STMT(){
-         if(hayErrores)
-            return null;
+    private Statement RETURN_STMT() throws ParserException{
         if(preanalisis.tipo == TipoToken.RETURN){
             match(TipoToken.RETURN);
             Expression expr = RETURN_EXP_OPC();
             match(TipoToken.SEMICOLON);
-            Statement rstmt = new StmtReturn(expr);
-            return rstmt;
+            return new StmtReturn(expr);
         }else{
-            hayErrores = true;
-            System.out.println("Se esperaba return");
-            return null;
+            String message = "Error en la linea " + preanalisis.getLine() +
+                    preanalisis.getPosition() + ". Se esperaba un return";
+            throw new ParserException(message);
         }
     }
     /*
     RETURN_EXP_OPC -> EXPRESSION
                    -> Ɛ         */
-    private Expression RETURN_EXP_OPC(){
-        if(hayErrores)
-            return null;
+    private Expression RETURN_EXP_OPC() throws ParserException{
         switch (preanalisis.tipo) {
              case BANG, MINUS, TRUE, FALSE, NULL, NUMBER, STRING, IDENTIFIER, LEFT_PAREN ->{
-                Expression expr = EXPRESSION();
-                return expr;
+                return EXPRESSION();
              }
         }
         return null;
     }
     // WHILE_STMT -> while ( EXPRESSION ) STATEMENT
-    private Statement WHILE_STMT(){
-        if(hayErrores)
-            return null;
+    private Statement WHILE_STMT() throws ParserException{
         if(preanalisis.tipo == TipoToken.WHILE){
             match(TipoToken.WHILE);
             match(TipoToken.LEFT_PAREN);
             Expression condition = EXPRESSION();
             match(TipoToken.RIGHT_PAREN);
             Statement body = STATEMENT();
-            Statement lstmt = new StmtLoop(condition, body);
-            return lstmt;
+            return new StmtLoop(condition, body);
         }else{
-            hayErrores = true;
-            System.out.println("Se esperaba un while");
-            return null;
+            String message = "Error en la linea " + preanalisis.getLine() +
+                    preanalisis.getPosition() + ". Error en ciclo while";
+            throw new ParserException(message);
         }
     }
     // BLOCK -> { DECLARATION }
-    private Statement BLOCK(){
-        if(hayErrores)
-            return null;
+    private Statement BLOCK() throws ParserException{
         if(preanalisis.tipo == TipoToken.LEFT_BRACE){
             match(TipoToken.LEFT_BRACE);
             List<Statement> statements = new ArrayList<>();      
             DECLARATION(statements);
             match(TipoToken.RIGHT_BRACE);
-            Statement bstmt = new StmtBlock(statements);
-            return bstmt;
+            return new StmtBlock(statements);
         }else{
-            hayErrores = true;
-            System.out.println("Se esperaba un {");
-            return null;
+            String message = "Error en la linea " + preanalisis.getLine() +
+                    preanalisis.getPosition() + ". Falta '{' o '}'";
+            throw new ParserException(message);
         }
     }
     
@@ -390,35 +344,29 @@ public class ASDR implements Parser{
     // -------------------------------------------------------------------------------------------
     // Expresiones -------------------------------------------------------------------------------
     //EXPRESSION -> ASSIGNMENT
-    private Expression EXPRESSION(){
-        if(hayErrores)
-            return null;
+    private Expression EXPRESSION() throws ParserException{
         switch (preanalisis.tipo) {
             case BANG, MINUS, TRUE, FALSE, NULL, NUMBER, STRING, IDENTIFIER, LEFT_PAREN ->{
-                Expression expr = ASSIGNMENT();
-                return expr;
+                return ASSIGNMENT();
             }
             default -> {
-                hayErrores = true;
-                System.out.println("Error en EXPRESSION");
-                return null;
+                String message = "Error en la linea " + preanalisis.getLine() +
+                        preanalisis.getPosition() + ". Se esperaba una expresión";
+                throw new ParserException(message);
             }
         }
     }
     // ASSIGNMENT -> LOGIC_OR ASSIGNMENT_OPC
-    private Expression ASSIGNMENT(){
-        if(hayErrores)
-            return null;
+    private Expression ASSIGNMENT() throws ParserException{
         switch (preanalisis.tipo) {
             case BANG, MINUS, TRUE, FALSE, NULL, NUMBER, STRING, IDENTIFIER, LEFT_PAREN ->{
                 Expression expr = LOGIC_OR();
-                expr = ASSIGNMENT_OPC(expr);
-                return expr;
+                return ASSIGNMENT_OPC(expr);
             }
             default -> {
-                    hayErrores = true;
-                    System.out.println("Error en ASSIGMENT");
-                    return null;
+                String message = "Error en la linea " + preanalisis.getLine() +
+                        preanalisis.getPosition() + ". Error de asignación";
+                throw new ParserException(message);
             }
         }
     }
@@ -426,42 +374,34 @@ public class ASDR implements Parser{
     /*
     ASSIGNMENT_OPC -> = EXPRESSION
                    -> Ɛ             */
-    private Expression ASSIGNMENT_OPC(Expression expr){
-        if(hayErrores)
-            return null;
+    private Expression ASSIGNMENT_OPC(Expression expr) throws ParserException{
         if(preanalisis.tipo == TipoToken.EQUAL){
             match(TipoToken.EQUAL);
             Token name = previous();
             Expression value = EXPRESSION();
-            ExprAssign expra = new ExprAssign(name, value);
-            return expra;
+            return new ExprAssign(name, value);
         }
         return expr;
     }
     // ------------------------------------------------------------------------------
     //LOGIC_OR -> LOGIC_AND LOGIC_OR_2
-    private Expression LOGIC_OR(){
-        if(hayErrores)
-            return null;
+    private Expression LOGIC_OR() throws ParserException{
         switch (preanalisis.tipo) {
             case  BANG, MINUS, TRUE, FALSE, NULL, NUMBER, STRING, IDENTIFIER, LEFT_PAREN ->{
                 Expression expr = LOGIC_AND();
-                expr = LOGIC_OR_2(expr);
-                return expr;
+                return LOGIC_OR_2(expr);
             }
             default -> {
-                hayErrores = true;
-                System.out.println("Error en LOGIC_OR");
-                return null;
+                String message = "Error en la linea " + preanalisis.getLine() +
+                        preanalisis.getPosition() + ". Error lógico OR";
+                throw new ParserException(message);
             }
         }
     }
     /*
     LOGIC_OR_2 -> or LOGIC_AND LOGIC_OR_2
                -> Ɛ         */
-    private Expression LOGIC_OR_2(Expression expr){
-        if(hayErrores)
-            return null;
+    private Expression LOGIC_OR_2(Expression expr) throws ParserException{
         if(preanalisis.tipo == TipoToken.OR){
             match(TipoToken.OR);
             Token operator = previous();
@@ -472,28 +412,23 @@ public class ASDR implements Parser{
         return expr;
     }
     //LOGIC_AND -> EQUALITY LOGIC_AND_2
-    private Expression LOGIC_AND(){
-        if(hayErrores)
-            return null;
+    private Expression LOGIC_AND() throws ParserException{
         switch (preanalisis.tipo) {
             case  BANG, MINUS, TRUE, FALSE, NULL, NUMBER, STRING, IDENTIFIER, LEFT_PAREN ->{
                 Expression expr = EQUALITY();
-                expr = LOGIC_AND_2(expr);
-                return expr;
+                return LOGIC_AND_2(expr);
             }
             default -> {
-                    hayErrores = true;
-                    System.out.println("Error en LOGIC_AND");
-                    return null;
+                String message = "Error en la linea " + preanalisis.getLine() +
+                        preanalisis.getPosition() + ". Error lógico and";
+                throw new ParserException(message);
             }
         }
     }
     /*
     LOGIC_AND_2 -> and EQUALITY LOGIC_AND_2
                 -> Ɛ            */
-    private Expression LOGIC_AND_2(Expression expr){
-        if(hayErrores)
-            return null;
+    private Expression LOGIC_AND_2(Expression expr) throws ParserException{
         if(preanalisis.tipo == TipoToken.AND){
             match(TipoToken.AND);
             Token operador = previous();
@@ -504,19 +439,16 @@ public class ASDR implements Parser{
         return expr;
     }
     //EQUALITY -> COMPARISON EQUALITY_2
-    private Expression EQUALITY(){
-        if(hayErrores)
-            return null;
+    private Expression EQUALITY() throws ParserException{
         switch (preanalisis.tipo) {
             case  BANG, MINUS, TRUE, FALSE, NULL, NUMBER, STRING, IDENTIFIER, LEFT_PAREN ->{
                 Expression expr = COMPARISON();
-                expr = EQUALITY_2(expr);
-                return expr;
+                return EQUALITY_2(expr);
             }
             default -> {
-                    hayErrores = true;
-                    System.out.println("Error en logic and");
-                    return null;
+                String message = "Error en la linea " + preanalisis.getLine() +
+                        preanalisis.getPosition() + ". Error en la igualdad";
+                throw new ParserException(message);
             }
         }
     }
@@ -524,9 +456,7 @@ public class ASDR implements Parser{
     EQUALITY_2 -> != COMPARISON EQUALITY_2
                -> == COMPARISON EQUALITY_2
                -> Ɛ         */
-    private Expression EQUALITY_2(Expression expr){
-        if(hayErrores)
-            return null;
+    private Expression EQUALITY_2(Expression expr) throws ParserException{
         switch(preanalisis.tipo){
             case BANG_EQUAL ->{
                 match(TipoToken.BANG_EQUAL);
@@ -546,19 +476,16 @@ public class ASDR implements Parser{
         return expr;
     }
     //COMPARISON -> TERM COMPARISON_2
-    private Expression COMPARISON(){
-        if(hayErrores)
-            return null;
+    private Expression COMPARISON() throws ParserException{
         switch (preanalisis.tipo) {
             case  BANG, MINUS, TRUE, FALSE, NULL, NUMBER, STRING, IDENTIFIER, LEFT_PAREN ->{
                 Expression expr = TERM();
-                expr = COMPARISON_2(expr);
-                return expr;
+                return COMPARISON_2(expr);
             }
             default -> {
-                hayErrores = true;
-                System.out.println("Error en logic and");
-                return null;
+                String message = "Error en la linea " + preanalisis.getLine() +
+                        preanalisis.getPosition() + ". Error de comparación";
+                throw new ParserException(message);
             }
         }
     }
@@ -568,9 +495,7 @@ public class ASDR implements Parser{
                  -> < TERM COMPARISON_2
                  -> <= TERM COMPARISON_2
                  -> Ɛ           */
-    private Expression COMPARISON_2(Expression expr){
-        if(hayErrores)
-            return null;
+    private Expression COMPARISON_2(Expression expr) throws ParserException{
         switch (preanalisis.tipo) {
             case GREATER ->{
                 match(TipoToken.GREATER);
@@ -604,19 +529,16 @@ public class ASDR implements Parser{
         return expr;
     }
     //TERM -> FACTOR TERM_2
-    private Expression TERM(){
-        if(hayErrores)
-            return null;
+    private Expression TERM() throws ParserException{
         switch (preanalisis.tipo) {
             case  BANG, MINUS, TRUE, FALSE, NULL, NUMBER, STRING, IDENTIFIER, LEFT_PAREN ->{
                 Expression expr = FACTOR();
-                expr = TERM_2(expr);
-                return expr;
+                return TERM_2(expr);
             }
             default -> {
-                    hayErrores = true;
-                    System.out.println("Error en TERM");
-                    return null;
+                String message = "Error en la linea " + preanalisis.getLine() +
+                        preanalisis.getPosition() + ". error en term";
+                throw new ParserException(message);
             }
         }
     }
@@ -624,9 +546,7 @@ public class ASDR implements Parser{
     TERM_2 -> - FACTOR TERM_2
            -> + FACTOR TERM_2
            -> Ɛ             */
-    private Expression TERM_2(Expression expr){
-        if(hayErrores)
-            return null;
+    private Expression TERM_2(Expression expr) throws ParserException{
         switch (preanalisis.tipo) {
             case MINUS ->{
                 match(TipoToken.MINUS);
@@ -646,19 +566,16 @@ public class ASDR implements Parser{
         return expr;
     }
     //FACTOR -> UNARY FACTOR_2   
-    private Expression FACTOR(){
-        if(hayErrores)
-            return null;
+    private Expression FACTOR() throws ParserException{
         switch (preanalisis.tipo){
             case BANG, MINUS, TRUE, FALSE, NULL, NUMBER, STRING, IDENTIFIER, LEFT_PAREN ->{
                 Expression expr = UNARY();
-                expr = FACTOR_2(expr);
-                return expr;
+                return FACTOR_2(expr);
             }
             default ->{
-                hayErrores = true;
-                System.out.println("Error en factor");
-                return null;
+                String message = "Error en la linea " + preanalisis.getLine() +
+                        preanalisis.getPosition() + ". Error en el factor";
+                throw new ParserException(message);
             }
         }
     }
@@ -666,9 +583,7 @@ public class ASDR implements Parser{
     FACTOR_2 -> / UNARY FACTOR_2
              -> * UNARY FACTOR_2
              -> Ɛ               */
-    private Expression FACTOR_2(Expression expr){
-        if(hayErrores)
-            return null;
+    private Expression FACTOR_2(Expression expr) throws ParserException{
         switch (preanalisis.tipo){
             case SLASH ->{
                 match(TipoToken.SLASH);
@@ -690,9 +605,7 @@ public class ASDR implements Parser{
     /* UNARY -> ! UNARY
           -> - UNARY
           -> CALL           */
-    private Expression UNARY(){
-        if(hayErrores)
-            return null;
+    private Expression UNARY() throws ParserException{
         switch (preanalisis.tipo){
             case BANG ->{
                 match(TipoToken.BANG);
@@ -710,34 +623,30 @@ public class ASDR implements Parser{
                 return CALL();
             }
             default ->{
-                hayErrores = true;
-                System.out.println("Error en Unary");
-                return null;
+                String message = "Error en la linea " + preanalisis.getLine() +
+                        preanalisis.getPosition() + ". Se esperaba un token unario";
+                throw new ParserException(message);
             }
         }
     }
     //CALL -> PRIMARY CALL_2
-    private Expression CALL(){
-        if(hayErrores)
-            return null;
+    private Expression CALL() throws ParserException{
         switch (preanalisis.tipo){
             case TRUE, FALSE, NULL, NUMBER, STRING, IDENTIFIER, LEFT_PAREN ->{
                 Expression exprPrimary = PRIMARY();
                 return CALL_2(exprPrimary);
             }
             default ->{
-                hayErrores = true;
-                System.out.println("Error en call");
-                return null;
+                String message = "Error en la linea " + preanalisis.getLine() +
+                        preanalisis.getPosition() + ". Error en la llamada";
+                throw new ParserException(message);
             }
         }
     }
     /*
     CALL_2 -> ( ARGUMENTS_OPC ) CALL_2
            -> Ɛ         */
-    private Expression CALL_2(Expression expr){
-        if(hayErrores)
-            return null;
+    private Expression CALL_2(Expression expr) throws ParserException{
         if(preanalisis.tipo == TipoToken.LEFT_PAREN){
             match(TipoToken.LEFT_PAREN);
             List<Expression> arguments = ARGUMENTS_OPC();
@@ -755,9 +664,7 @@ public class ASDR implements Parser{
             -> string
             -> id
             -> ( EXPRESSION )           */
-    private Expression PRIMARY(){
-        if(hayErrores)
-            return null;
+    private Expression PRIMARY() throws ParserException{
         switch (preanalisis.tipo){
             case TRUE -> {
                 match(TipoToken.TRUE);
@@ -793,18 +700,16 @@ public class ASDR implements Parser{
                 return new ExprGrouping(expr);
             }
             default ->{
-                hayErrores = true;
-                System.out.println("Error en PRIMARY");
-                return null;
+                String message = "Error en la linea " + preanalisis.getLine() +
+                        preanalisis.getPosition() + ". Se esperaba un token primario";
+                throw new ParserException(message);
             }
         }
     }
     // -------------------------------------------------------------------------------------------
     // OTRAS -------------------------------------------------------------------------------------
     // FUNCTION -> id ( PARAMETERS_OPC ) BLOCK
-    private Statement FUNCTION(){
-        if(hayErrores)
-            return null;
+    private Statement FUNCTION() throws ParserException{
         if(preanalisis.tipo == TipoToken.IDENTIFIER){
             Token name = previous();
             match(TipoToken.IDENTIFIER);
@@ -814,45 +719,38 @@ public class ASDR implements Parser{
             StmtBlock body = (StmtBlock) BLOCK();
             return new StmtFunction(name, params, body);
         }else{
-            hayErrores = true;
-            System.out.println("Error en FUNCTION");
-            return null;
+            String message = "Error en la linea " + preanalisis.getLine() +
+                    preanalisis.getPosition() + ". Se esperaba un identificador de función";
+            throw new ParserException(message);
         }
     }
     /*
     PARAMETERS_OPC -> PARAMETERS
                    -> Ɛ         */
-    private List<Token> PARAMETERS_OPC(){
-        if(hayErrores)
-            return null;
+    private List<Token> PARAMETERS_OPC() throws ParserException{
         if(preanalisis.tipo == TipoToken.IDENTIFIER){
             return PARAMETERS();
         }
         return null;
     }
     //PARAMETERS -> id PARAMETERS_2
-    private List<Token> PARAMETERS(){
-        List<Token> lstprmtrs = new ArrayList<>();
-        if(hayErrores)
-            return null;
+    private List<Token> PARAMETERS() throws ParserException{
         if(preanalisis.tipo == TipoToken.IDENTIFIER){
+            List<Token> lstprmtrs = new ArrayList<>();
             match(TipoToken.IDENTIFIER);
             lstprmtrs.add(previous());
             PARAMETERS_2(lstprmtrs);
             return lstprmtrs;
-
         }else{
-            hayErrores = true;
-            System.out.println("Error en PARAMETERS");
-            return null;
+            String message = "Error en la linea " + preanalisis.getLine() +
+                    preanalisis.getPosition() + ". Se esperaba una lista de parametros";
+            throw new ParserException(message);
         }
     }
     /*
     PARAMETERS_2 -> , id PARAMETERS_2
                  -> Ɛ           */
-    private void PARAMETERS_2(List<Token> lstprmtrs){
-        if(hayErrores)
-            return;
+    private void PARAMETERS_2(List<Token> lstprmtrs) throws ParserException{
         if(preanalisis.tipo == TipoToken.COMMA){
             match(TipoToken.COMMA);
             match(TipoToken.IDENTIFIER);
@@ -863,10 +761,8 @@ public class ASDR implements Parser{
     /*
     ARGUMENTS_OPC -> EXPRESSION ARGUMENTS
                   -> Ɛ          */
-    private List<Expression> ARGUMENTS_OPC(){
+    private List<Expression> ARGUMENTS_OPC() throws ParserException{
         List<Expression> lstArguments = new ArrayList<>();
-        if(hayErrores)
-            return null;
         switch (preanalisis.tipo){
             case BANG, MINUS, TRUE, FALSE, NULL, NUMBER, STRING, IDENTIFIER, LEFT_PAREN ->{
                 Expression expr = EXPRESSION();
@@ -879,9 +775,7 @@ public class ASDR implements Parser{
     /*
     ARGUMENTS -> , EXPRESSION ARGUMENTS
               -> Ɛ          */
-    private void ARGUMENTS(List<Expression> lstArguments){
-        if(hayErrores)
-            return;
+    private void ARGUMENTS(List<Expression> lstArguments) throws ParserException{
         if(preanalisis.tipo == TipoToken.COMMA){
             match(TipoToken.COMMA);
             Expression expr = EXPRESSION();
@@ -891,7 +785,7 @@ public class ASDR implements Parser{
     }
     // -------------------------------------------------------------------------------------------
     //////////////////////////////////////////////////////////////////////////////////////////////
-    private void match(TipoToken tt){
+    private void match(TipoToken tt) throws ParserException{
         if(preanalisis.tipo == tt){
             i++;
             preanalisis = tokens.get(i);
@@ -899,23 +793,13 @@ public class ASDR implements Parser{
         }else{
             hayErrores = true;
             System.out.println("Error encontrado");
-        }
-    }
-    /*
-    private void match(TipoToken tt) throws ParserException {
-        if(preanalisis.getTipo() ==  tt){
-            i++;
-            preanalisis = tokens.get(i);
-        }
-        else{
-            String message = "Error en la línea " +
-                    preanalisis.getPosition().getLine() +
+            String message = "Error en la linea " +
+                    preanalisis.getLine() +
                     ". Se esperaba " + preanalisis.getTipo() +
                     " pero se encontró " + tt;
             throw new ParserException(message);
         }
     }
-    */
     private Token previous(){
         return this.tokens.get(i-1);
     }    

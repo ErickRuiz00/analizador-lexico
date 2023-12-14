@@ -1,9 +1,13 @@
-// Prueba 1:
-var nombre = "Nombre";
-var apellido1 = Apellido";
+// Prueba 8:
+var init = 1;
+var lim = 10;
+var fib = 0;
+var aux = 1;
+while(init <= lim){
+    print fib;
+    aux = aux + fib;
+    fib = aux - fib;
+    init = init + 1;
+}
 
-print nombre + " " + apelli?do1;
-
-
-
-/ 23e
+print "Fin";

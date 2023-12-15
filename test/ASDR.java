@@ -376,8 +376,8 @@ public class ASDR implements Parser{
                    -> Ɛ             */
     private Expression ASSIGNMENT_OPC(Expression expr) throws ParserException{
         if(preanalisis.tipo == TipoToken.EQUAL){
-            match(TipoToken.EQUAL);
             Token name = previous();
+            match(TipoToken.EQUAL);
             Expression value = EXPRESSION();
             return new ExprAssign(name, value);
         }
@@ -711,8 +711,8 @@ public class ASDR implements Parser{
     // FUNCTION -> id ( PARAMETERS_OPC ) BLOCK
     private Statement FUNCTION() throws ParserException{
         if(preanalisis.tipo == TipoToken.IDENTIFIER){
-            Token name = previous();
             match(TipoToken.IDENTIFIER);
+            Token name = previous();
             match(TipoToken.LEFT_PAREN);
             List<Token> params = PARAMETERS_OPC();
             match(TipoToken.RIGHT_PAREN);
